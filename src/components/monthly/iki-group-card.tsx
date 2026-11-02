@@ -3,8 +3,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { ActionPlanRow } from "@/components/monthly/action-plan-row"
+import { InlineActionInputRow } from "@/components/monthly/inline-action-input-row"
 import type { SkpIndicator } from "@/lib/mock-data"
 import { useSkpStore, type ActionPlanWithEvidence } from "@/lib/stores/skp-store"
 import { Target, Plus, Search, Copy } from "lucide-react"
@@ -30,163 +30,110 @@ export function IkiGroupCard({
   onOpenReference,
   onOpenCopySource,
 }: IkiGroupCardProps) {
-  const { getActionPlansWithEvidenceByIndicator, getAccumulatedRealization } = useSkpStore()
-
+  const { getActionPlansWithEvidenceByIndicator } = useSkpStore()
   const actionPlans = getActionPlansWithEvidenceByIndicator(indicator.id, monthlyPeriodId)
-
-  // Realisasi bulan ini khusus IKI ini
-  const currentMonthRealization = actionPlans.reduce(
-    (sum, act) => sum + (Number(act.realizationValue) || 0),
-    0
-  )
-
-  // Akumulasi total tahunan sampai saat ini
-  const totalAccumulation = getAccumulatedRealization(indicator.id)
-  const percentage =
-    indicator.annualTarget > 0
-      ? Math.min(100, Math.round((totalAccumulation / indicator.annualTarget) * 100))
-      : 0
 
   return (
     <Card className="border shadow-xs overflow-hidden">
-      {/* Header Grup IKI */}
-      <CardHeader className="bg-muted/30 border-b px-5 py-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 mt-0.5">
-              <Target className="size-4" />
+      {/* Header IKI Bersih Tanpa Rekap / Progress Bar */}
+      <CardHeader className="bg-muted/30 border-b px-4 py-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600">
+              <Target className="size-3.5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                  Indikator Kinerja Individu
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  IKI
                 </span>
-                <Badge variant="outline" className="text-[11px] font-normal capitalize">
+                <Badge variant="outline" className="text-[10px] font-normal py-0 px-1.5 h-4 capitalize">
                   {indicator.measurementType}
                 </Badge>
+                <span className="text-[11px] text-muted-foreground font-normal">
+                  ({actionPlans.length} item rencana aksi)
+                </span>
               </div>
-              <h3 className="font-semibold text-foreground text-sm mt-0.5 leading-snug">
+              <h3 className="font-semibold text-foreground text-sm leading-snug line-clamp-1" title={indicator.indicatorName}>
                 {indicator.indicatorName}
               </h3>
             </div>
           </div>
 
-          {/* Quick Metrics Header */}
-          <div className="flex items-center gap-6 shrink-0 text-right self-end md:self-center">
-            <div>
-              <p className="text-[11px] text-muted-foreground">Realisasi Bulan Ini</p>
-              <p className="text-sm font-bold text-foreground">
-                {currentMonthRealization} {indicator.unit}
-              </p>
-            </div>
-            <div className="border-l pl-4">
-              <p className="text-[11px] text-muted-foreground">Akumulasi / Target</p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-foreground">{totalAccumulation}</span>
-                <span className="text-xs text-muted-foreground">/ {indicator.annualTarget} {indicator.unit}</span>
-                <span className="text-[11px] font-medium text-emerald-600 ml-1">
-                  ({percentage}%)
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress bar visual */}
-        <div className="mt-3 w-full">
-          <Progress value={percentage} className="h-1.5" />
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-0">
-        {/* Toolbar & Action Buttons */}
-        <div className="flex items-center justify-between px-5 py-2.5 bg-muted/10 border-b gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground font-medium">
-              {actionPlans.length} Rencana Aksi terdaftar
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Salin dari Bulan Lalu / Bulan Lain */}
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+            {/* Salin dari Bulan Lalu */}
             {onOpenCopySource && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onOpenCopySource(indicator)}
-                className="h-8 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                title="Salin rencana aksi dari bulan sebelumnya"
               >
-                <Copy className="size-3.5" />
-                <span>Salin dari Bulan Lalu</span>
+                <Copy className="size-3" />
+                <span>Salin Bulan Lalu</span>
               </Button>
             )}
 
-            {/* Referensi Rekan */}
+            {/* Cek Referensi Teman */}
             {onOpenReference && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onOpenReference(indicator)}
-                className="h-8 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                className="h-7 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground border-primary/20 bg-primary/5 hover:bg-primary/10"
+                title="Buka referensi rekan se-instansi"
               >
-                <Search className="size-3.5" />
-                <span>Cari Referensi</span>
+                <Search className="size-3 text-primary" />
+                <span className="text-primary font-medium">Cek Teman</span>
               </Button>
             )}
 
-            {/* Tambah Aksi Baru */}
+            {/* Tambah Aksi Modal Dialog (jika butuh form lengkap) */}
             <Button
               size="sm"
               onClick={() => onAddAction(indicator)}
-              className="h-8 text-xs flex items-center gap-1.5"
+              variant="secondary"
+              className="h-7 text-xs flex items-center gap-1"
+              title="Form tambah aksi dengan upload berkas"
             >
-              <Plus className="size-3.5" />
-              <span>Tambah Aksi</span>
+              <Plus className="size-3" />
+              <span>Dialog Form</span>
             </Button>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Table of Action Plans */}
-        {actionPlans.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-xs">Belum ada rencana aksi untuk indikator ini pada bulan berjalan.</p>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => onAddAction(indicator)}
-              className="text-xs mt-1 text-primary"
-            >
-              + Tambah Rencana Aksi Pertama
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b">
-                <tr>
-                  <th className="py-2.5 px-4 w-[45%]">Rencana Aksi</th>
-                  <th className="py-2.5 px-4 w-[30%]">Bukti Dukung</th>
-                  <th className="py-2.5 px-4 w-[15%]">Realisasi</th>
-                  <th className="py-2.5 px-4 w-[10%] text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {actionPlans.map((action) => (
-                  <ActionPlanRow
-                    key={action.id}
-                    actionPlan={action}
-                    indicator={indicator}
-                    onEdit={(act) => onEditAction(act, indicator)}
-                    onMove={onMoveAction}
-                    onDelete={onDeleteAction}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/20 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b">
+              <tr>
+                <th className="py-2 px-4 w-[46%]">Rencana Aksi (Salin Teks)</th>
+                <th className="py-2 px-4 w-[30%]">Bukti Dukung (Salin Link)</th>
+                <th className="py-2 px-4 w-[12%]">Realisasi</th>
+                <th className="py-2 px-4 w-[12%] text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {actionPlans.map((action) => (
+                <ActionPlanRow
+                  key={action.id}
+                  actionPlan={action}
+                  indicator={indicator}
+                  onEdit={(act) => onEditAction(act, indicator)}
+                  onMove={onMoveAction}
+                  onDelete={onDeleteAction}
+                />
+              ))}
+
+              {/* Input Cepat Sebaris (Excel/Notion style) */}
+              <InlineActionInputRow indicator={indicator} />
+            </tbody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   )
 }
-
