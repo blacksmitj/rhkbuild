@@ -15,6 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useSkpStore } from "@/lib/stores/skp-store"
 import { RhkIndividuItem } from "@/components/skp/rhk-individu-item"
 import type { SkpLeadIntervention, SkpWorkPlan, SkpIndicator } from "@/lib/mock-data"
@@ -25,7 +26,7 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
-  Building,
+  FolderTree,
 } from "lucide-react"
 
 interface RhkPimpinanItemProps {
@@ -52,7 +53,7 @@ export function RhkPimpinanItem({
   onDeleteIki,
 }: RhkPimpinanItemProps) {
   const [isOpen, setIsOpen] = React.useState(true)
-  const { getWorkPlansByLead, getIndicatorsByWorkPlan } = useSkpStore()
+  const { getWorkPlansByLead, getIndicatorsByWorkPlan, organization, selectedYear } = useSkpStore()
 
   const workPlans = getWorkPlansByLead(lead.id)
   const totalIki = workPlans.reduce(
@@ -60,63 +61,94 @@ export function RhkPimpinanItem({
     0
   )
 
+  const leaderInitials =
+    (organization?.unitName || organization?.name || "Pimpinan")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "KP"
+
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="border-2 border-border/70 rounded-xl bg-card shadow-xs overflow-hidden"
-    >
-      {/* Level 1: RHK Pimpinan Header */}
-      <div className="flex items-start justify-between p-4 bg-muted/40 gap-3 border-b">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-3">
+      {/* Level 1: Row RHK Pimpinan (Top Parent) */}
+      <div className="group relative flex items-center justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-xs hover:border-emerald-500/50 hover:shadow-sm transition-all gap-4">
+        {/* Kolom Kiri: Chevron, Icon, Title & Meta */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Chevron Collapse */}
           <CollapsibleTrigger
             render={
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground mt-0.5"
+                className="size-7 shrink-0 text-muted-foreground hover:text-foreground rounded-md p-0"
               >
-                {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                {isOpen ? (
+                  <ChevronDown className="size-4 text-foreground" />
+                ) : (
+                  <ChevronRight className="size-4 text-foreground" />
+                )}
               </Button>
             }
           />
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded">
-                <Building className="size-3.5" />
-                RHK Pimpinan #{lead.order}
+
+          {/* Emerald Icon Box (ala referensi) */}
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
+            <FolderTree className="size-5" />
+          </div>
+
+          {/* Title & Metadata */}
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm md:text-base font-bold text-foreground tracking-tight line-clamp-1">
+                {lead.title}
               </span>
-              <Badge variant="outline" className="text-xs bg-background">
-                {workPlans.length} RHK Individu
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-background">
-                {totalIki} IKI
-              </Badge>
             </div>
-            <h3 className="text-sm md:text-base font-semibold leading-relaxed break-words text-foreground">
-              {lead.title}
-            </h3>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+              <span className="font-semibold text-foreground/80">Tahun {selectedYear}</span>
+              <span>•</span>
+              <span>{workPlans.length} RHK Individu</span>
+              <span>•</span>
+              <span>{totalIki} IKI</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => onAddWorkPlan(lead.id)}
-            className="h-8 text-xs flex items-center gap-1 shadow-xs"
+        {/* Kolom Kanan: Pill Ringkasan, Avatar Pimpinan & Dropdown */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Badge
+            variant="outline"
+            className="hidden sm:inline-flex bg-emerald-50 text-emerald-800 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 font-semibold px-3 py-1 rounded-full text-xs"
           >
-            <Plus className="size-3.5" />
-            <span className="hidden sm:inline">Tambah RHK Individu</span>
-          </Button>
+            {totalIki} IKI dalam {workPlans.length} RHK
+          </Badge>
 
+          {/* Avatar Pimpinan */}
+          <Avatar size="sm" className="hidden sm:inline-flex ring-1 ring-border">
+            <AvatarFallback className="text-[10px] bg-emerald-600 text-white font-bold">
+              {leaderInitials}
+            </AvatarFallback>
+          </Avatar>
+
+          {/* Dropdown Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger render={
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                <MoreVertical className="size-4" />
-              </Button>
-            } />
-            <DropdownMenuContent align="end">
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                >
+                  <MoreVertical className="size-4" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => onAddWorkPlan(lead.id)} className="cursor-pointer">
+                <Plus className="size-3.5 mr-2 text-emerald-600" />
+                Tambah RHK Individu
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEditLead(lead)} className="cursor-pointer">
                 <Edit2 className="size-3.5 mr-2" />
                 Edit RHK Pimpinan
@@ -124,7 +156,7 @@ export function RhkPimpinanItem({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => onDeleteLead(lead.id)}
-                className="text-destructive focus:text-destructive cursor-pointer"
+                className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="size-3.5 mr-2" />
                 Hapus RHK Pimpinan
@@ -134,21 +166,18 @@ export function RhkPimpinanItem({
         </div>
       </div>
 
-      {/* Level 2: Konten RHK Individu */}
-      <CollapsibleContent className="p-4 space-y-3 bg-muted/10">
+      {/* Level 2: Children (RHK Individu) with Tree Indentation Line */}
+      <CollapsibleContent className="space-y-3 pl-6 md:pl-10 relative before:absolute before:left-3.5 md:before:left-5 before:top-2 before:bottom-2 before:w-[1.5px] before:bg-border/60">
         {workPlans.length === 0 ? (
-          <div className="text-center py-8 border border-dashed rounded-lg bg-card">
-            <p className="text-sm text-muted-foreground mb-3">
-              Belum ada Rencana Kinerja Individu yang mengintervensi RHK Pimpinan ini.
-            </p>
+          <div className="flex items-center justify-between p-3.5 rounded-xl border border-dashed border-border/70 bg-muted/20 text-xs text-muted-foreground">
+            <span>Belum ada RHK Individu untuk intervensi ini.</span>
             <Button
+              size="xs"
               variant="outline"
-              size="sm"
               onClick={() => onAddWorkPlan(lead.id)}
-              className="text-xs"
+              className="gap-1 text-xs"
             >
-              <Plus className="size-3.5 mr-1" />
-              Tambah RHK Individu Sekarang
+              <Plus className="size-3" /> Tambah RHK Individu
             </Button>
           </div>
         ) : (

@@ -9,7 +9,6 @@ import { AddIkiDialog } from "@/components/skp/add-iki-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -17,17 +16,24 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import type { SkpLeadIntervention, SkpWorkPlan, SkpIndicator } from "@/lib/mock-data"
-import { Plus, ShieldAlert } from "lucide-react"
+import { Plus, ShieldAlert, Search, Layers, Filter } from "lucide-react"
 
 export function SkpTree() {
   const {
     leadInterventions,
+    workPlans,
+    indicators,
     selectedYear,
     deleteLeadIntervention,
     deleteWorkPlan,
     deleteIndicator,
   } = useSkpStore()
+
+  // Filter & Search State
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [activeTab, setActiveTab] = React.useState<"all" | "utama" | "tambahan">("all")
 
   // Modal Dialog States
   const [rhkPimpinanOpen, setRhkPimpinanOpen] = React.useState(false)
@@ -100,39 +106,127 @@ export function SkpTree() {
     }
   }
 
+  // Filter items sesuai search dan tab
+  const filteredLeads = leadInterventions.filter((lead) => {
+    const query = searchQuery.toLowerCase().trim()
+    if (!query) return true
+
+    const matchLead = lead.title.toLowerCase().includes(query)
+    const childWps = workPlans.filter((wp) => wp.leadInterventionId === lead.id)
+    const matchWp = childWps.some((wp) => wp.title.toLowerCase().includes(query))
+    const matchIki = indicators.some(
+      (iki) =>
+        childWps.some((wp) => wp.id === iki.workPlanId) &&
+        iki.indicatorName.toLowerCase().includes(query)
+    )
+
+    return matchLead || matchWp || matchIki
+  })
+
+  const totalUtama = workPlans.filter((w) => (w as any).type !== "tambahan").length
+  const totalTambahan = workPlans.filter((w) => (w as any).type === "tambahan").length
+
   return (
-    <div className="space-y-4">
-      {/* Action Header Tree */}
-      <div className="flex items-center justify-between pb-2">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Hierarki Kinerja Pegawai Tahun {selectedYear}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Struktur RHK Pimpinan yang diintervensi → RHK Individu → Indikator Kinerja Individu (IKI).
-          </p>
+    <div className="space-y-5">
+      {/* Top Bar Filter & Actions ala Mockup */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b">
+        {/* Pills / Tabs Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab("all")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              activeTab === "all"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Semua
+            <span className="text-[10px] px-1.5 py-0.2 bg-muted rounded-full">
+              {leadInterventions.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("utama")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              activeTab === "utama"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Kinerja Utama
+            <span className="text-[10px] px-1.5 py-0.2 bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 rounded-full">
+              {totalUtama}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("tambahan")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+              activeTab === "tambahan"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Kinerja Tambahan
+            <span className="text-[10px] px-1.5 py-0.2 bg-muted rounded-full">
+              {totalTambahan}
+            </span>
+          </button>
         </div>
-        <Button onClick={handleAddLead} size="sm" className="flex items-center gap-1.5">
-          <Plus className="size-4" />
-          Tambah RHK Pimpinan
-        </Button>
+
+        {/* Search & Add Action */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari RHK atau IKI..."
+              className="pl-9 h-9 text-xs rounded-xl bg-background"
+            />
+          </div>
+
+          <Button
+            onClick={handleAddLead}
+            size="sm"
+            className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs shrink-0 flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Plus className="size-4" />
+            <span>Tambah RHK</span>
+          </Button>
+        </div>
       </div>
 
-      {/* List RHK Pimpinan */}
-      {leadInterventions.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-xl bg-card">
-          <h3 className="font-semibold text-base mb-1">Belum Ada Struktur SKP</h3>
-          <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-            Mulailah dengan menambahkan RHK Pimpinan yang akan diintervensi untuk periode tahun {selectedYear}.
+      {/* List RHK Pimpinan Tree Items */}
+      {filteredLeads.length === 0 ? (
+        <div className="text-center py-16 border-2 border-dashed rounded-2xl bg-card/60">
+          <div className="size-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+            <Layers className="size-6" />
+          </div>
+          <h3 className="font-semibold text-base mb-1">
+            {searchQuery ? "Tidak ditemukan hasil pencarian" : "Belum Ada Struktur SKP"}
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4 max-w-sm mx-auto">
+            {searchQuery
+              ? `Kata kunci "${searchQuery}" tidak cocok dengan RHK atau IKI manapun.`
+              : `Mulailah dengan menambahkan RHK Pimpinan yang diintervensi pada tahun ${selectedYear}.`}
           </p>
-          <Button onClick={handleAddLead} size="sm">
-            <Plus className="size-4 mr-1.5" />
-            Tambah RHK Pimpinan Pertama
-          </Button>
+          {!searchQuery && (
+            <Button
+              onClick={handleAddLead}
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <Plus className="size-4 mr-1.5" />
+              Tambah RHK Pimpinan Pertama
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
-          {leadInterventions.map((lead) => (
+          {filteredLeads.map((lead) => (
             <RhkPimpinanItem
               key={lead.id}
               lead={lead}
@@ -192,4 +286,3 @@ export function SkpTree() {
     </div>
   )
 }
-

@@ -5,9 +5,7 @@ import { AppHeader } from "@/components/layout/app-header"
 import { SkpTree } from "@/components/skp/skp-tree"
 import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
 import { useSkpStore } from "@/lib/stores/skp-store"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ShieldCheck } from "lucide-react"
 
 export default function SkpPage() {
   const { selectedYear, currentUser, organization, periods } = useSkpStore()
@@ -39,15 +37,6 @@ export default function SkpPage() {
               {currentUser.name} ({currentUser.position}) — {organization.unitName}
             </p>
           </div>
-
-          <Card className="bg-muted/30 border-dashed">
-            <CardContent className="p-3 flex items-center gap-3 text-xs text-muted-foreground">
-              <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
-              <span>
-                Diisi sekali setahun. Validasi otomatis melindungi IKI yang sudah memiliki rencana aksi bulanan.
-              </span>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Tree Component */}

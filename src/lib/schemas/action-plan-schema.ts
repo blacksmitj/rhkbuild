@@ -11,7 +11,7 @@ export const actionPlanSchema = z.object({
     .string()
     .min(3, { message: "Evidence description/name must be at least 3 characters" })
     .max(300, { message: "Evidence name cannot exceed 300 characters" }),
-  evidenceType: z.enum(["url", "file"]).default("url"),
+  evidenceType: z.enum(["url", "file"]),
   evidenceValue: z
     .string()
     .min(1, { message: "Evidence link or file identifier is required" }),
