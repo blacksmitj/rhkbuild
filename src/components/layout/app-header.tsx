@@ -10,14 +10,23 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { ExportButton } from "@/components/export/export-button"
+import { Button } from "@/components/ui/button"
+import { History } from "lucide-react"
 
 interface HeaderProps {
   breadcrumbs?: { title: string; href?: string }[]
+  onOpenAuditLog?: () => void
+  showExport?: boolean
 }
 
-export function AppHeader({ breadcrumbs = [] }: HeaderProps) {
+export function AppHeader({
+  breadcrumbs = [],
+  onOpenAuditLog,
+  showExport = true,
+}: HeaderProps) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 bg-background sticky top-0 z-10">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 bg-background sticky top-0 z-10">
       <div className="flex items-center gap-2 px-1">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
@@ -44,7 +53,22 @@ export function AppHeader({ breadcrumbs = [] }: HeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
+
+      <div className="flex items-center gap-2">
+        {onOpenAuditLog && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenAuditLog}
+            className="h-8 text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+            title="Lihat Histori & Audit Log"
+          >
+            <History className="size-3.5" />
+            <span className="hidden sm:inline">Audit Log</span>
+          </Button>
+        )}
+        {showExport && <ExportButton />}
+      </div>
     </header>
   )
 }
-

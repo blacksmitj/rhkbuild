@@ -1,14 +1,17 @@
 "use client"
 
+import * as React from "react"
 import { AppHeader } from "@/components/layout/app-header"
 import { SkpTree } from "@/components/skp/skp-tree"
+import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
 import { useSkpStore } from "@/lib/stores/skp-store"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarCheck, ShieldCheck } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
 
 export default function SkpPage() {
   const { selectedYear, currentUser, organization, periods } = useSkpStore()
+  const [auditLogOpen, setAuditLogOpen] = React.useState(false)
   const currentPeriod = periods.find((p) => p.year === selectedYear)
 
   return (
@@ -18,6 +21,7 @@ export default function SkpPage() {
           { title: "SKP Tahunan", href: "/skp" },
           { title: `Tahun ${selectedYear}` },
         ]}
+        onOpenAuditLog={() => setAuditLogOpen(true)}
       />
       <main className="flex-1 space-y-6 p-6">
         {/* Header Profile & Periode */}
@@ -48,8 +52,10 @@ export default function SkpPage() {
 
         {/* Tree Component */}
         <SkpTree />
+
+        {/* Audit Log Panel */}
+        <ActivityLogPanel open={auditLogOpen} onOpenChange={setAuditLogOpen} />
       </main>
     </>
   )
 }
-

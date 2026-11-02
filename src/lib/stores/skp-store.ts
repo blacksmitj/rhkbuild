@@ -10,6 +10,7 @@ import {
   mockActionPlans,
   mockEvidences,
   mockMasterUnits,
+  mockColleagueReferences,
   type User,
   type Organization,
   type SkpPeriod,
@@ -20,7 +21,9 @@ import {
   type SkpActionPlan,
   type SkpEvidence,
   type MonthStatus,
+  type ColleagueReference,
 } from "@/lib/mock-data"
+import { initialActivityLogs, type ActivityLog } from "@/lib/utils/activity-logs"
 
 export interface ActionPlanWithEvidence extends SkpActionPlan {
   evidence?: SkpEvidence
@@ -42,6 +45,8 @@ interface SkpState {
   monthlyPeriods: SkpMonthlyPeriod[]
   actionPlans: SkpActionPlan[]
   evidences: SkpEvidence[]
+  colleagueReferences: ColleagueReference[]
+  activityLogs: ActivityLog[]
 
   // Setters
   setSelectedYear: (year: number) => void
@@ -70,6 +75,7 @@ interface SkpState {
     evidenceName: string
     evidenceType: "url" | "file"
     evidenceValue: string
+    sourceActionId?: string | null
   }) => void
   updateActionPlan: (params: {
     id: string
@@ -83,6 +89,26 @@ interface SkpState {
   moveActionPlan: (id: string, targetIndicatorId: string) => { success: boolean; error?: string }
   setMonthStatus: (month: number, status: MonthStatus) => void
 
+  // Phase 3: Copy Action Plans
+  copyFromPreviousMonth: (targetIndicatorId: string) => { count: number; duplicates: number }
+  copyFromOtherMonth: (
+    targetIndicatorId: string,
+    sourceMonth: number,
+    sourceYear: number
+  ) => { count: number; duplicates: number }
+  copyFromReference: (
+    targetIndicatorId: string,
+    reference: ColleagueReference
+  ) => { success: boolean; isDuplicate: boolean }
+
+  // Phase 4: Audit Log helper
+  logActivity: (
+    action: ActivityLog["action"],
+    module: ActivityLog["module"],
+    title: string,
+    detail: string
+  ) => void
+
   // Helpers / Selectors
   getActivePeriod: () => SkpPeriod | undefined
   getCurrentMonthlyPeriod: () => SkpMonthlyPeriod | undefined
@@ -90,6 +116,7 @@ interface SkpState {
   getWorkPlansByLead: (leadId: string) => SkpWorkPlan[]
   getAccumulatedRealization: (indicatorId: string) => number
   getActionPlansWithEvidenceByIndicator: (indicatorId: string, monthlyPeriodId: string) => ActionPlanWithEvidence[]
+  checkDuplicateAction: (indicatorId: string, monthlyPeriodId: string, description: string) => boolean
 }
 
 export const useSkpStore = create<SkpState>((set, get) => ({
@@ -106,9 +133,23 @@ export const useSkpStore = create<SkpState>((set, get) => ({
   monthlyPeriods: mockMonthlyPeriods,
   actionPlans: mockActionPlans,
   evidences: mockEvidences,
+  colleagueReferences: mockColleagueReferences,
+  activityLogs: initialActivityLogs,
 
   setSelectedYear: (year) => set({ selectedYear: year }),
   setSelectedMonth: (month) => set({ selectedMonth: month }),
+
+  logActivity: (action, module, title, detail) => {
+    const newLog: ActivityLog = {
+      id: `log-${Date.now()}`,
+      action,
+      module,
+      title,
+      detail,
+      timestamp: new Date().toISOString(),
+    }
+    set((st) => ({ activityLogs: [newLog, ...st.activityLogs] }))
+  },
 
   // RHK Pimpinan
   addLeadIntervention: (title) => {
@@ -125,6 +166,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     set((state) => ({
       leadInterventions: [...state.leadInterventions, newLead],
     }))
+    get().logActivity("create", "rhk", "Tambah RHK Pimpinan", `Uraian: "${title.substring(0, 60)}..."`)
   },
 
   updateLeadIntervention: (id, title) => {
@@ -133,6 +175,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         l.id === id ? { ...l, title } : l
       ),
     }))
+    get().logActivity("update", "rhk", "Perbarui RHK Pimpinan", `Uraian: "${title.substring(0, 60)}..."`)
   },
 
   deleteLeadIntervention: (id) => {
@@ -151,7 +194,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     if (hasActions) {
       return {
         success: false,
-        error: "RHK Pimpinan tidak dapat dihapus karena memiliki IKI dengan histori rencana aksi/realisasi.",
+        error: "RHK Pimpinan tidak dapat dihapus karena memiliki IKI dengan histori rencana aksi/realisasi (BR-17).",
       }
     }
 
@@ -160,6 +203,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
       workPlans: state.workPlans.filter((wp) => wp.leadInterventionId !== id),
       indicators: state.indicators.filter((ind) => !relatedWpIds.includes(ind.workPlanId)),
     })
+    get().logActivity("delete", "rhk", "Hapus RHK Pimpinan", `Menghapus RHK Pimpinan ID ${id}`)
     return { success: true }
   },
 
@@ -175,6 +219,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     set((state) => ({
       workPlans: [...state.workPlans, newWp],
     }))
+    get().logActivity("create", "rhk", "Tambah RHK Individu", `Uraian: "${title.substring(0, 60)}..."`)
   },
 
   updateWorkPlan: (id, title) => {
@@ -183,6 +228,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         wp.id === id ? { ...wp, title } : wp
       ),
     }))
+    get().logActivity("update", "rhk", "Perbarui RHK Individu", `Uraian: "${title.substring(0, 60)}..."`)
   },
 
   deleteWorkPlan: (id) => {
@@ -197,7 +243,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     if (hasActions) {
       return {
         success: false,
-        error: "RHK Individu tidak dapat dihapus karena memiliki IKI dengan rencana aksi.",
+        error: "RHK Individu tidak dapat dihapus karena memiliki IKI dengan rencana aksi (BR-17).",
       }
     }
 
@@ -205,6 +251,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
       workPlans: state.workPlans.filter((wp) => wp.id !== id),
       indicators: state.indicators.filter((i) => i.workPlanId !== id),
     })
+    get().logActivity("delete", "rhk", "Hapus RHK Individu", `Menghapus RHK Individu ID ${id}`)
     return { success: true }
   },
 
@@ -219,6 +266,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     set((state) => ({
       indicators: [...state.indicators, newIndicator],
     }))
+    get().logActivity("create", "iki", "Tambah IKI Baru", `${data.indicatorName} (Target: ${data.annualTarget} ${data.unit})`)
   },
 
   updateIndicator: (id, data) => {
@@ -227,6 +275,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         ind.id === id ? { ...ind, ...data } : ind
       ),
     }))
+    get().logActivity("update", "iki", "Perbarui IKI", `Memperbarui target/satuan IKI ID ${id}`)
   },
 
   deleteIndicator: (id) => {
@@ -242,6 +291,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     set({
       indicators: state.indicators.filter((ind) => ind.id !== id),
     })
+    get().logActivity("delete", "iki", "Hapus IKI", `Menghapus IKI ID ${id}`)
     return { success: true }
   },
 
@@ -253,13 +303,14 @@ export const useSkpStore = create<SkpState>((set, get) => ({
     evidenceName,
     evidenceType,
     evidenceValue,
+    sourceActionId = null,
   }) => {
     const currentMonth = get().getCurrentMonthlyPeriod()
     if (!currentMonth) return
 
     const now = new Date().toISOString()
-    const actionPlanId = `act-${Date.now()}`
-    const evidenceId = `ev-${Date.now()}`
+    const actionPlanId = `act-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
+    const evidenceId = `ev-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
 
     const newActionPlan: SkpActionPlan = {
       id: actionPlanId,
@@ -267,7 +318,7 @@ export const useSkpStore = create<SkpState>((set, get) => ({
       indicatorId,
       actionDescription,
       realizationValue,
-      sourceActionId: null,
+      sourceActionId,
       createdAt: now,
       updatedAt: now,
     }
@@ -290,6 +341,13 @@ export const useSkpStore = create<SkpState>((set, get) => ({
           : mp
       ),
     }))
+
+    get().logActivity(
+      "create",
+      "action_plan",
+      "Tambah Rencana Aksi",
+      `"${actionDescription.substring(0, 50)}..." (Realisasi: ${realizationValue})`
+    )
   },
 
   updateActionPlan: ({
@@ -334,6 +392,13 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         evidences: updatedEvidences,
       }
     })
+
+    get().logActivity(
+      "update",
+      "action_plan",
+      "Perbarui Rencana Aksi",
+      `"${actionDescription.substring(0, 50)}..." (Realisasi: ${realizationValue})`
+    )
   },
 
   deleteActionPlan: (id) => {
@@ -342,7 +407,6 @@ export const useSkpStore = create<SkpState>((set, get) => ({
       const remainingActs = state.actionPlans.filter((a) => a.id !== id)
       const remainingEvidences = state.evidences.filter((ev) => ev.actionPlanId !== id)
 
-      // Cek apakah bulan tersebut masih ada rencana aksi tersisa
       let updatedMonthlyPeriods = state.monthlyPeriods
       if (targetAct) {
         const actsInMonth = remainingActs.filter(
@@ -361,6 +425,8 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         monthlyPeriods: updatedMonthlyPeriods,
       }
     })
+
+    get().logActivity("delete", "action_plan", "Hapus Rencana Aksi", `Menghapus rencana aksi ID ${id}`)
   },
 
   moveActionPlan: (id, targetIndicatorId) => {
@@ -375,7 +441,6 @@ export const useSkpStore = create<SkpState>((set, get) => ({
       return { success: false, error: "Indikator asal atau tujuan tidak valid." }
     }
 
-    // BR-15 Validation: Validasi kesesuaian satuan
     if (sourceIndicator.unit.toLowerCase() !== targetIndicator.unit.toLowerCase()) {
       return {
         success: false,
@@ -389,6 +454,13 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         a.id === id ? { ...a, indicatorId: targetIndicatorId, updatedAt: now } : a
       ),
     }))
+
+    get().logActivity(
+      "move",
+      "action_plan",
+      "Pindahkan Rencana Aksi",
+      `Dari IKI #${sourceIndicator.order} ke IKI #${targetIndicator.order}`
+    )
 
     return { success: true }
   },
@@ -405,6 +477,166 @@ export const useSkpStore = create<SkpState>((set, get) => ({
           : mp
       ),
     }))
+
+    get().logActivity(
+      "update",
+      "status",
+      "Ubah Status Pengisian Bulanan",
+      `Bulan ${month} diubah menjadi: ${status === "selesai" ? "Selesai Diisi" : "Draft"}`
+    )
+  },
+
+  // Phase 3: Copy Implementations
+  copyFromPreviousMonth: (targetIndicatorId) => {
+    const state = get()
+    const currentMonth = state.getCurrentMonthlyPeriod()
+    if (!currentMonth) return { count: 0, duplicates: 0 }
+
+    const prevMonthNum = currentMonth.month - 1
+    if (prevMonthNum < 1) return { count: 0, duplicates: 0 }
+
+    const activePeriod = state.getActivePeriod()
+    if (!activePeriod) return { count: 0, duplicates: 0 }
+
+    const prevMonthlyPeriod = state.monthlyPeriods.find(
+      (mp) => mp.skpPeriodId === activePeriod.id && mp.month === prevMonthNum
+    )
+    if (!prevMonthlyPeriod) return { count: 0, duplicates: 0 }
+
+    const sourceActions = state.actionPlans.filter(
+      (act) => act.indicatorId === targetIndicatorId && act.monthlyPeriodId === prevMonthlyPeriod.id
+    )
+
+    if (sourceActions.length === 0) return { count: 0, duplicates: 0 }
+
+    let addedCount = 0
+    let duplicateCount = 0
+
+    const currentActs = state.actionPlans.filter(
+      (act) => act.indicatorId === targetIndicatorId && act.monthlyPeriodId === currentMonth.id
+    )
+
+    sourceActions.forEach((src) => {
+      const isDuplicate = currentActs.some(
+        (c) => c.actionDescription.trim().toLowerCase() === src.actionDescription.trim().toLowerCase()
+      )
+      if (isDuplicate) {
+        duplicateCount++
+      }
+
+      const srcEvidence = state.evidences.find((ev) => ev.actionPlanId === src.id)
+
+      state.addActionPlan({
+        indicatorId: targetIndicatorId,
+        actionDescription: src.actionDescription,
+        realizationValue: 0,
+        evidenceName: srcEvidence ? `${srcEvidence.evidenceName} (Salinan)` : "Bukti Dukung",
+        evidenceType: srcEvidence?.evidenceType || "url",
+        evidenceValue: srcEvidence?.evidenceValue || "",
+        sourceActionId: src.id,
+      })
+      addedCount++
+    })
+
+    get().logActivity(
+      "copy",
+      "action_plan",
+      "Salin dari Bulan Sebelumnya",
+      `Menyalin ${addedCount} aktivitas ke bulan ${currentMonth.month}`
+    )
+
+    return { count: addedCount, duplicates: duplicateCount }
+  },
+
+  copyFromOtherMonth: (targetIndicatorId, sourceMonth, sourceYear) => {
+    const state = get()
+    const currentMonth = state.getCurrentMonthlyPeriod()
+    if (!currentMonth) return { count: 0, duplicates: 0 }
+
+    const sourcePeriod = state.periods.find((p) => p.year === sourceYear)
+    if (!sourcePeriod) return { count: 0, duplicates: 0 }
+
+    const sourceMonthlyPeriod = state.monthlyPeriods.find(
+      (mp) => mp.skpPeriodId === sourcePeriod.id && mp.month === sourceMonth
+    )
+    if (!sourceMonthlyPeriod) return { count: 0, duplicates: 0 }
+
+    const sourceActions = state.actionPlans.filter(
+      (act) => act.indicatorId === targetIndicatorId && act.monthlyPeriodId === sourceMonthlyPeriod.id
+    )
+
+    if (sourceActions.length === 0) return { count: 0, duplicates: 0 }
+
+    let addedCount = 0
+    let duplicateCount = 0
+
+    const currentActs = state.actionPlans.filter(
+      (act) => act.indicatorId === targetIndicatorId && act.monthlyPeriodId === currentMonth.id
+    )
+
+    sourceActions.forEach((src) => {
+      const isDuplicate = currentActs.some(
+        (c) => c.actionDescription.trim().toLowerCase() === src.actionDescription.trim().toLowerCase()
+      )
+      if (isDuplicate) {
+        duplicateCount++
+      }
+
+      const srcEvidence = state.evidences.find((ev) => ev.actionPlanId === src.id)
+
+      state.addActionPlan({
+        indicatorId: targetIndicatorId,
+        actionDescription: src.actionDescription,
+        realizationValue: 0,
+        evidenceName: srcEvidence ? `${srcEvidence.evidenceName} (Salinan)` : "Bukti Dukung",
+        evidenceType: srcEvidence?.evidenceType || "url",
+        evidenceValue: srcEvidence?.evidenceValue || "",
+        sourceActionId: src.id,
+      })
+      addedCount++
+    })
+
+    get().logActivity(
+      "copy",
+      "action_plan",
+      "Salin dari Bulan Lain",
+      `Menyalin ${addedCount} aktivitas dari bulan ${sourceMonth}/${sourceYear}`
+    )
+
+    return { count: addedCount, duplicates: duplicateCount }
+  },
+
+  copyFromReference: (targetIndicatorId, reference) => {
+    const state = get()
+    const currentMonth = state.getCurrentMonthlyPeriod()
+    if (!currentMonth) return { success: false, isDuplicate: false }
+
+    const currentActs = state.actionPlans.filter(
+      (act) => act.indicatorId === targetIndicatorId && act.monthlyPeriodId === currentMonth.id
+    )
+
+    const isDuplicate = currentActs.some(
+      (c) => c.actionDescription.trim().toLowerCase() === reference.actionDescription.trim().toLowerCase()
+    )
+
+    state.addActionPlan({
+      indicatorId: targetIndicatorId,
+      actionDescription: reference.actionDescription,
+      realizationValue: 0,
+      evidenceName: `Ref: ${reference.evidenceName}`,
+      evidenceType: "url",
+      evidenceValue: reference.evidenceValue,
+      sourceActionId: reference.id,
+    })
+
+    get().logActivity(
+      "copy",
+      "action_plan",
+      "Salin dari Rekan Instansi",
+      `Menyalin referensi milik ${reference.ownerName}`
+    )
+
+    return { success: true, isDuplicate }
   },
 
   // Helpers
@@ -444,5 +676,15 @@ export const useSkpStore = create<SkpState>((set, get) => ({
         ...act,
         evidence: evidences.find((ev) => ev.actionPlanId === act.id),
       }))
+  },
+
+  checkDuplicateAction: (indicatorId, monthlyPeriodId, description) => {
+    const { actionPlans } = get()
+    return actionPlans.some(
+      (act) =>
+        act.indicatorId === indicatorId &&
+        act.monthlyPeriodId === monthlyPeriodId &&
+        act.actionDescription.trim().toLowerCase() === description.trim().toLowerCase()
+    )
   },
 }))

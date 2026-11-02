@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { ActionPlanRow } from "@/components/bulanan/action-plan-row"
 import type { SkpIndicator } from "@/lib/mock-data"
 import { useSkpStore, type ActionPlanWithEvidence } from "@/lib/stores/skp-store"
-import { Target, Plus, Search } from "lucide-react"
+import { Target, Plus, Search, Copy } from "lucide-react"
 
 interface IkiGroupCardProps {
   indicator: SkpIndicator
@@ -17,6 +17,7 @@ interface IkiGroupCardProps {
   onMoveAction: (actionPlan: ActionPlanWithEvidence) => void
   onDeleteAction: (id: string) => void
   onOpenReference?: (indicator: SkpIndicator) => void
+  onOpenCopySource?: (indicator: SkpIndicator) => void
 }
 
 export function IkiGroupCard({
@@ -27,6 +28,7 @@ export function IkiGroupCard({
   onMoveAction,
   onDeleteAction,
   onOpenReference,
+  onOpenCopySource,
 }: IkiGroupCardProps) {
   const { getActionPlansWithEvidenceByIndicator, getAccumulatedRealization } = useSkpStore()
 
@@ -71,7 +73,7 @@ export function IkiGroupCard({
           </div>
 
           {/* Akumulasi & Progres Stat */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-4 shrink-0 flex-wrap">
             <div className="text-right">
               <div className="text-xs text-muted-foreground">Realisasi Bulan Ini</div>
               <div className="text-sm font-bold text-foreground">
@@ -79,7 +81,7 @@ export function IkiGroupCard({
               </div>
             </div>
 
-            <div className="w-36 space-y-1">
+            <div className="w-32 space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Akumulasi</span>
                 <span className="font-semibold">{percentage}%</span>
@@ -90,8 +92,21 @@ export function IkiGroupCard({
               </div>
             </div>
 
-            {/* Aksi Tambah & Referensi */}
+            {/* Aksi Tambah, Salin & Referensi (Phase 3) */}
             <div className="flex items-center gap-1.5 pl-2 border-l">
+              {onOpenCopySource && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpenCopySource(indicator)}
+                  className="h-8 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                  title="Salin rencana aksi dari bulan lalu, bulan lain, atau rekan"
+                >
+                  <Copy className="size-3.5" />
+                  <span className="hidden sm:inline">Salin</span>
+                </Button>
+              )}
+
               {onOpenReference && (
                 <Button
                   variant="outline"
@@ -122,18 +137,29 @@ export function IkiGroupCard({
       <CardContent className="p-0">
         {actionPlans.length === 0 ? (
           <div className="py-8 px-4 text-center">
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-muted-foreground mb-3">
               Belum ada rencana aksi yang dicatat untuk IKI ini pada bulan terpilih.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onAddAction(indicator)}
-              className="text-xs h-7"
-            >
-              <Plus className="size-3 mr-1" />
-              Tambah Rencana Aksi Sekarang
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenCopySource?.(indicator)}
+                className="text-xs h-7"
+              >
+                <Copy className="size-3 mr-1" />
+                Salin dari Bulan Lalu / Rekan
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => onAddAction(indicator)}
+                className="text-xs h-7"
+              >
+                <Plus className="size-3 mr-1" />
+                Tambah Baru
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -165,4 +191,3 @@ export function IkiGroupCard({
     </Card>
   )
 }
-

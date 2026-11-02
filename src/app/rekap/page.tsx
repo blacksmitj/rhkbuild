@@ -1,18 +1,21 @@
 "use client"
 
+import * as React from "react"
 import { AppHeader } from "@/components/layout/app-header"
 import { RecapIkiCard } from "@/components/rekap/recap-iki-card"
 import { RecapMonthlyTable } from "@/components/rekap/recap-monthly-table"
+import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
 import { useSkpStore } from "@/lib/stores/skp-store"
 import { calculateAnnualRecap } from "@/lib/utils/recap-calculator"
 import { Card, CardContent } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { PieChart, CalendarDays, TrendingUp, Info } from "lucide-react"
+import { cn } from "cn"
 
 export default function RekapPage() {
   const { indicators, monthlyPeriods, actionPlans, selectedYear } = useSkpStore()
+  const [auditLogOpen, setAuditLogOpen] = React.useState(false)
 
   const recaps = calculateAnnualRecap(indicators, monthlyPeriods, actionPlans)
 
@@ -32,6 +35,7 @@ export default function RekapPage() {
           { title: "Rekapitulasi", href: "/rekap" },
           { title: `Tahun ${selectedYear}` },
         ]}
+        onOpenAuditLog={() => setAuditLogOpen(true)}
       />
       <main className="flex-1 space-y-6 p-6">
         {/* Header Rekap */}
@@ -105,6 +109,9 @@ export default function RekapPage() {
 
         {/* Tabel Matriks Bulanan 12 Bulan */}
         <RecapMonthlyTable recaps={recaps} />
+
+        {/* Audit Log Panel */}
+        <ActivityLogPanel open={auditLogOpen} onOpenChange={setAuditLogOpen} />
       </main>
     </>
   )

@@ -8,14 +8,18 @@ import { MarkDoneButton } from "@/components/bulanan/mark-done-button"
 import { IkiGroupCard } from "@/components/bulanan/iki-group-card"
 import { AddActionDialog } from "@/components/bulanan/add-action-dialog"
 import { MoveActionDialog } from "@/components/bulanan/move-action-dialog"
+import { ReferenceSheet } from "@/components/referensi/reference-sheet"
+import { CopySourceSheet } from "@/components/copy/copy-source-sheet"
+import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
+import { EmptyState } from "@/components/ui/empty-state"
 import { useSkpStore, type ActionPlanWithEvidence } from "@/lib/stores/skp-store"
 import { MONTH_NAMES, type SkpIndicator } from "@/lib/mock-data"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { CalendarCheck, Info } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { CalendarCheck, Sparkles } from "lucide-react"
 
 export default function BulananPage() {
+  const router = useRouter()
   const {
     indicators,
     selectedMonth,
@@ -27,13 +31,20 @@ export default function BulananPage() {
   const currentMonthlyPeriod = getCurrentMonthlyPeriod()
   const monthName = MONTH_NAMES[selectedMonth - 1]
 
-  // Dialog States
+  // Action Dialog States
   const [addDialogOpen, setAddDialogOpen] = React.useState(false)
   const [activeIndicator, setActiveIndicator] = React.useState<SkpIndicator | null>(null)
   const [editingAction, setEditingAction] = React.useState<ActionPlanWithEvidence | null>(null)
 
+  // Move Dialog States
   const [moveDialogOpen, setMoveDialogOpen] = React.useState(false)
   const [movingAction, setMovingAction] = React.useState<ActionPlanWithEvidence | null>(null)
+
+  // Phase 3 & 4: Reference, Copy & Audit States
+  const [referenceSheetOpen, setReferenceSheetOpen] = React.useState(false)
+  const [copySourceSheetOpen, setCopySourceSheetOpen] = React.useState(false)
+  const [auditLogOpen, setAuditLogOpen] = React.useState(false)
+  const [referenceTargetIndicator, setReferenceTargetIndicator] = React.useState<SkpIndicator | null>(null)
 
   // Open Handlers
   const handleAddAction = (indicator: SkpIndicator) => {
@@ -57,6 +68,17 @@ export default function BulananPage() {
     deleteActionPlan(id)
   }
 
+  // Phase 3 Trigger Handlers
+  const handleOpenReference = (indicator: SkpIndicator) => {
+    setReferenceTargetIndicator(indicator)
+    setReferenceSheetOpen(true)
+  }
+
+  const handleOpenCopySource = (indicator: SkpIndicator) => {
+    setReferenceTargetIndicator(indicator)
+    setCopySourceSheetOpen(true)
+  }
+
   return (
     <>
       <AppHeader
@@ -64,6 +86,7 @@ export default function BulananPage() {
           { title: "Pengisian Bulanan", href: "/bulanan" },
           { title: `${monthName} ${selectedYear}` },
         ]}
+        onOpenAuditLog={() => setAuditLogOpen(true)}
       />
       <main className="flex-1 space-y-6 p-6">
         {/* Header Title & Month Status */}
@@ -78,11 +101,23 @@ export default function BulananPage() {
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              Input rencana aksi, bukti dukung, dan nilai realisasi bulan berjalan yang terhubung langsung ke IKI tahunan.
+              Input rencana aksi, bukti dukung, dan realisasi. Anda juga dapat menyalin aktivitas dari bulan lalu atau referensi rekan se-instansi.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setReferenceTargetIndicator(indicators[0] || null)
+                setReferenceSheetOpen(true)
+              }}
+              className="flex items-center gap-1.5 h-9"
+            >
+              <Sparkles className="size-4 text-primary" />
+              <span>Cari Referensi Instansi</span>
+            </Button>
             <MarkDoneButton />
           </div>
         </div>
@@ -97,20 +132,14 @@ export default function BulananPage() {
 
         {/* List IKI Cards (Grup Rencana Aksi per IKI) */}
         {indicators.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-xl bg-card p-6">
-            <Info className="size-10 text-muted-foreground mx-auto mb-3" />
-            <h3 className="font-semibold text-base mb-1">Belum Ada Struktur IKI</h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-              Silakan buat struktur RHK dan IKI terlebih dahulu di menu SKP Tahunan sebelum mengisi rencana aksi bulanan.
-            </p>
-            <Link
-              href="/skp"
-              className={cn(buttonVariants({ size: "sm" }), "flex items-center gap-1.5")}
-            >
-              <CalendarCheck className="size-4" />
-              Buka SKP Tahunan
-            </Link>
-          </div>
+          <EmptyState
+            icon={CalendarCheck}
+            title="Belum Ada Struktur IKI"
+            description="Silakan buat struktur RHK dan IKI terlebih dahulu di menu SKP Tahunan sebelum mengisi rencana aksi bulanan."
+            actionLabel="Buka SKP Tahunan"
+            onAction={() => router.push("/skp")}
+            actionIcon={CalendarCheck}
+          />
         ) : (
           <div className="space-y-4">
             {currentMonthlyPeriod &&
@@ -123,6 +152,8 @@ export default function BulananPage() {
                   onEditAction={handleEditAction}
                   onMoveAction={handleMoveAction}
                   onDeleteAction={handleDeleteAction}
+                  onOpenReference={handleOpenReference}
+                  onOpenCopySource={handleOpenCopySource}
                 />
               ))}
           </div>
@@ -144,6 +175,26 @@ export default function BulananPage() {
           onOpenChange={setMoveDialogOpen}
           actionPlan={movingAction}
         />
+
+        {/* Sheet 1: Referensi Rekan Se-Instansi (Slide-over Kanan) */}
+        <ReferenceSheet
+          open={referenceSheetOpen}
+          onOpenChange={setReferenceSheetOpen}
+          targetIndicator={referenceTargetIndicator}
+        />
+
+        {/* Sheet 2: Dialog Modal 3 Pilihan Salin Rencana Aksi */}
+        {referenceTargetIndicator && (
+          <CopySourceSheet
+            open={copySourceSheetOpen}
+            onOpenChange={setCopySourceSheetOpen}
+            targetIndicator={referenceTargetIndicator}
+            onOpenColleagueReference={() => setReferenceSheetOpen(true)}
+          />
+        )}
+
+        {/* Audit Log Panel */}
+        <ActivityLogPanel open={auditLogOpen} onOpenChange={setAuditLogOpen} />
       </main>
     </>
   )

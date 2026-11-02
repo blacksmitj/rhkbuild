@@ -114,6 +114,14 @@ export const mockColleagues: User[] = [
     organizationId: "org-1",
     position: "Widyaiswara Ahli Muda",
   },
+  {
+    id: "usr-4",
+    name: "Dewi Lestari, S.Psi",
+    nip: "199308142019032008",
+    role: "pegawai",
+    organizationId: "org-1",
+    position: "Pengelola Penyelenggaraan Pelatihan",
+  },
 ]
 
 export const mockMasterUnits = [
@@ -371,7 +379,7 @@ export const mockEvidences: SkpEvidence[] = [
   },
 ]
 
-// Mock data referensi dari kolega (untuk Sprint 3 / Fase 3)
+// Mock data referensi dari pegawai se-instansi (PRD Bagian 4E & BR-13)
 export interface ColleagueReference {
   id: string
   ownerName: string
@@ -383,6 +391,7 @@ export interface ColleagueReference {
   unit: string
   actionDescription: string
   evidenceName: string
+  evidenceValue: string
   realizationValue: number
 }
 
@@ -398,6 +407,7 @@ export const mockColleagueReferences: ColleagueReference[] = [
     unit: "JPL",
     actionDescription: "Melaksanakan pendampingan teknis dan simulasi sistem pembelajaran mandiri bagi ASN",
     evidenceName: "Dokumentasi & Berita Acara Simulasi LMS",
+    evidenceValue: "https://drive.google.com/drive/folders/simulasi-lms-2025",
     realizationValue: 4,
   },
   {
@@ -411,7 +421,50 @@ export const mockColleagueReferences: ColleagueReference[] = [
     unit: "Orang",
     actionDescription: "Sinkronisasi database kelulusan diklat ke portal SIMPEG ASN",
     evidenceName: "Log Sinkronisasi dan Tanda Terima Data SIMPEG",
+    evidenceValue: "https://drive.google.com/file/d/simpeg-sync-log.pdf",
     realizationValue: 45,
+  },
+  {
+    id: "ref-3",
+    ownerName: "Dewi Lestari, S.Psi",
+    nip: "199308142019032008",
+    unitName: "Sub Bagian Umum & Kepegawaian",
+    periodMonth: 1,
+    periodYear: 2026,
+    indicatorName: "Jumlah modul ajar dan bahan tayang materi pelatihan yang dimutakhirkan",
+    unit: "Dokumen",
+    actionDescription: "Review kurikulum microlearning orientasi ASN angkatan I",
+    evidenceName: "Draf Revisi Kurikulum Microlearning",
+    evidenceValue: "https://drive.google.com/file/d/review-microlearning.pdf",
+    realizationValue: 2,
+  },
+  {
+    id: "ref-4",
+    ownerName: "Agus Pratama, M.Kom",
+    nip: "198511122008011003",
+    unitName: "Bidang Pengembangan Kompetensi Aparatur",
+    periodMonth: 2,
+    periodYear: 2026,
+    indicatorName: "Jumlah Jam Pelajaran (JPL) pelatihan kompetensi yang terlaksana sesuai kalender pelatihan",
+    unit: "JPL",
+    actionDescription: "Fasilitasi coaching klinis penyusunan matriks peran hasil unit kerja",
+    evidenceName: "Laporan Pelaksanaan Coaching Matriks Peran Hasil",
+    evidenceValue: "https://drive.google.com/drive/folders/coaching-matriks-2026",
+    realizationValue: 5,
+  },
+  {
+    id: "ref-5",
+    ownerName: "Siti Rahmawati, S.Sos",
+    nip: "199105202015022001",
+    unitName: "Bidang Pengembangan Kompetensi Aparatur",
+    periodMonth: 2,
+    periodYear: 2026,
+    indicatorName: "Jumlah laporan evaluasi berkala pelaksanaan pelatihan",
+    unit: "Laporan",
+    actionDescription: "Pengolahan kuesioner evaluasi kepuasan peserta diklat kepemimpinan",
+    evidenceName: "Rekap Nilai Indeks Kepuasan Pelatihan",
+    evidenceValue: "https://drive.google.com/file/d/indeks-kepuasan-diklat.pdf",
+    realizationValue: 1,
   },
 ]
 
@@ -446,4 +499,3 @@ export function getActionPlansByIndicatorAndMonth(
     (act) => act.indicatorId === indicatorId && act.monthlyPeriodId === monthlyPeriodId
   )
 }
-
