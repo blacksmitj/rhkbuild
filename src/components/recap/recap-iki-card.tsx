@@ -48,41 +48,50 @@ export function RecapIkiCard({ recap }: RecapIkiCardProps) {
           <div className="space-y-0.5">
             <span className="text-[11px] text-muted-foreground block">Target Tahunan</span>
             <span className="text-base font-bold text-foreground">
-              {annualTarget}
+              {annualTarget} <span className="text-xs font-normal text-muted-foreground">{unit}</span>
             </span>
-            <span className="text-[10px] text-muted-foreground block">{unit}</span>
           </div>
 
           <div className="space-y-0.5 border-x">
             <span className="text-[11px] text-muted-foreground block">Total Realisasi</span>
-            <span className="text-base font-bold text-primary">
-              {totalRealization}
+            <span className="text-base font-bold text-emerald-600">
+              {totalRealization} <span className="text-xs font-normal text-muted-foreground">{unit}</span>
             </span>
-            <span className="text-[10px] text-muted-foreground block">{unit}</span>
           </div>
 
           <div className="space-y-0.5">
             <span className="text-[11px] text-muted-foreground block">Sisa Target</span>
-            <span className="text-base font-bold text-muted-foreground">
-              {remainingTarget}
+            <span className="text-base font-bold text-foreground">
+              {remainingTarget} <span className="text-xs font-normal text-muted-foreground">{unit}</span>
             </span>
-            <span className="text-[10px] text-muted-foreground block">{unit}</span>
           </div>
         </div>
 
-        {/* Progress Bar & Status */}
+        {/* Progress Bar */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex justify-between text-xs">
             <span className="text-muted-foreground flex items-center gap-1">
               <TrendingUp className="size-3.5 text-primary" />
-              Tingkat Capaian
+              Progres Capaian
             </span>
-            <span className="font-bold font-mono">{achievementPercentage}%</span>
+            <span className="font-semibold text-foreground">{achievementPercentage}%</span>
           </div>
-          <Progress
-            value={Math.min(100, achievementPercentage)}
-            className="h-2"
-          />
+          <Progress value={Math.min(100, achievementPercentage)} className="h-2" />
+        </div>
+
+        {/* Status Callout Footer */}
+        <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+          {isAchieved ? (
+            <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <CheckCircle className="size-3.5" />
+              <span>Target tahunan indikator ini telah terpenuhi</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-amber-600 font-medium">
+              <AlertCircle className="size-3.5" />
+              <span>Memerlukan {remainingTarget} {unit} lagi untuk memenuhi target</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

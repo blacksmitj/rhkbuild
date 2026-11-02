@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { MONTH_NAMES } from "@/lib/mock-data"
-import { Search, Filter } from "lucide-react"
+import { Search } from "lucide-react"
 
 interface ReferenceFilterBarProps {
   searchQuery: string
@@ -49,10 +49,10 @@ export function ReferenceFilterBar({
           onChange={(e) => onUnitChange(e.target.value)}
           className="w-full text-xs"
         >
-          <NativeSelectOption value="ALL">Semua Unit</NativeSelectOption>
-          {availableUnits.map((u) => (
-            <NativeSelectOption key={u} value={u}>
-              {u}
+          <NativeSelectOption value="all">Semua Unit Kerja</NativeSelectOption>
+          {availableUnits.map((unit) => (
+            <NativeSelectOption key={unit} value={unit}>
+              {unit}
             </NativeSelectOption>
           ))}
         </NativeSelect>
@@ -63,7 +63,7 @@ export function ReferenceFilterBar({
           onChange={(e) => onYearChange(e.target.value)}
           className="w-full text-xs"
         >
-          <NativeSelectOption value="ALL">Semua Tahun</NativeSelectOption>
+          <NativeSelectOption value="all">Semua Tahun</NativeSelectOption>
           <NativeSelectOption value="2026">2026</NativeSelectOption>
           <NativeSelectOption value="2025">2025</NativeSelectOption>
         </NativeSelect>
@@ -74,9 +74,9 @@ export function ReferenceFilterBar({
           onChange={(e) => onMonthChange(e.target.value)}
           className="w-full text-xs"
         >
-          <NativeSelectOption value="ALL">Semua Bulan</NativeSelectOption>
+          <NativeSelectOption value="all">Semua Bulan</NativeSelectOption>
           {MONTH_NAMES.map((name, idx) => (
-            <NativeSelectOption key={name} value={(idx + 1).toString()}>
+            <NativeSelectOption key={name} value={String(idx + 1)}>
               {name}
             </NativeSelectOption>
           ))}

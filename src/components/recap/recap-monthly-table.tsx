@@ -48,52 +48,45 @@ export function RecapMonthlyTable({ recaps }: RecapMonthlyTableProps) {
               {recaps.map((item) => (
                 <tr key={item.indicator.id} className="hover:bg-muted/30 transition-colors">
                   {/* Nama IKI */}
-                  <td className="py-3 px-4 font-medium text-foreground sticky left-0 bg-background/95 backdrop-blur-xs">
+                  <td className="py-3 px-4 sticky left-0 bg-background/95 backdrop-blur-xs font-medium text-foreground">
                     <div className="line-clamp-2" title={item.indicator.indicatorName}>
-                      <span className="font-bold text-primary mr-1">#{item.indicator.order}</span>
                       {item.indicator.indicatorName}
                     </div>
-                    <span className="text-[10px] text-muted-foreground block mt-0.5">
-                      Satuan: {item.unit}
-                    </span>
                   </td>
 
                   {/* Target Tahunan */}
-                  <td className="py-3 px-2 text-center font-mono font-semibold text-foreground">
-                    {item.annualTarget}
+                  <td className="py-3 px-2 text-center text-muted-foreground whitespace-nowrap">
+                    {item.annualTarget} <span className="text-[10px]">{item.unit}</span>
                   </td>
 
-                  {/* 12 Bulan */}
-                  {item.monthlyBreakdown.map((mb) => {
-                    const hasVal = mb.value > 0
-                    return (
-                      <td
-                        key={mb.month}
-                        className={cn(
-                          "py-3 px-2 text-center font-mono",
-                          hasVal ? "font-bold text-foreground bg-primary/5" : "text-muted-foreground/40"
-                        )}
-                      >
-                        {hasVal ? mb.value : "-"}
-                      </td>
-                    )
-                  })}
+                  {/* 12 Bulan Realisasi */}
+                  {item.monthlyBreakdown.map((mb) => (
+                    <td
+                      key={mb.month}
+                      className={cn(
+                        "py-3 px-2 text-center whitespace-nowrap",
+                        mb.value > 0 ? "font-semibold text-foreground bg-primary/5" : "text-muted-foreground/40"
+                      )}
+                    >
+                      {mb.value > 0 ? mb.value : "-"}
+                    </td>
+                  ))}
 
-                  {/* Total Realisasi */}
-                  <td className="py-3 px-3 text-center font-mono font-bold bg-primary/5 text-primary">
-                    {item.totalRealization}
+                  {/* Total Capaian Realisasi */}
+                  <td className="py-3 px-3 text-center font-bold text-foreground bg-primary/5 whitespace-nowrap">
+                    {item.totalRealization} <span className="text-[10px] font-normal">{item.unit}</span>
                   </td>
 
                   {/* Persentase Capaian */}
-                  <td className="py-3 px-3 text-center font-mono font-bold">
+                  <td className="py-3 px-3 text-center whitespace-nowrap">
                     <span
                       className={cn(
-                        "px-1.5 py-0.5 rounded text-[11px]",
+                        "inline-block px-1.5 py-0.5 rounded text-[11px] font-bold",
                         item.achievementPercentage >= 100
-                          ? "bg-emerald-100 text-emerald-800"
-                          : item.achievementPercentage > 0
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-muted-foreground"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                          : item.achievementPercentage >= 50
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
                       )}
                     >
                       {item.achievementPercentage}%
@@ -108,4 +101,3 @@ export function RecapMonthlyTable({ recaps }: RecapMonthlyTableProps) {
     </Card>
   )
 }
-

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { ColleagueReference } from "@/lib/mock-data"
 import { MONTH_NAMES } from "@/lib/mock-data"
-import { User, Building, Copy, Calendar, ExternalLink, Link2 } from "lucide-react"
+import { Building, Copy, Calendar, ExternalLink, Link2 } from "lucide-react"
 
 interface ReferenceCardProps {
   reference: ColleagueReference
@@ -51,54 +51,51 @@ export function ReferenceCard({
       </CardHeader>
 
       <CardContent className="p-3.5 space-y-3">
-        {/* IKI Referensi */}
-        <div className="space-y-0.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            Indikator Kinerja (IKI):
+        {/* Hubungan IKI */}
+        <div className="text-xs">
+          <span className="text-[11px] text-muted-foreground uppercase font-semibold">
+            Terkait IKI:
           </span>
-          <p className="text-xs font-medium text-foreground line-clamp-2">
+          <p className="font-medium text-foreground line-clamp-2 mt-0.5">
             {reference.indicatorName}
           </p>
         </div>
 
-        {/* Uraian Rencana Aksi */}
-        <div className="p-2.5 rounded-md bg-muted/40 border text-xs">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Uraian Aktivitas:
+        {/* Deskripsi Aksi */}
+        <div className="bg-muted/40 p-2.5 rounded-lg border text-xs">
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+            Rencana Aksi:
           </span>
-          <p className="font-normal text-foreground leading-relaxed">
-            "{reference.actionDescription}"
+          <p className="font-medium text-foreground mt-0.5 leading-relaxed">
+            {reference.actionDescription}
           </p>
         </div>
 
-        {/* Bukti Dukung & Realisasi Sumber */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-          <div className="flex items-center gap-1.5 truncate max-w-[200px]" title={reference.evidenceName}>
-            <Link2 className="size-3.5 text-primary shrink-0" />
-            <span className="truncate text-[11px] font-medium">{reference.evidenceName}</span>
+        {/* Bukti Dukung */}
+        <div className="text-xs flex items-center justify-between gap-2 border-t pt-2">
+          <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+            <Link2 className="size-3 shrink-0 text-primary" />
+            <span className="truncate text-[11px]" title={reference.evidenceName}>
+              {reference.evidenceName}
+            </span>
           </div>
-          <span className="text-[11px] font-mono font-semibold text-foreground shrink-0">
+
+          <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">
             {reference.realizationValue} {reference.unit}
           </span>
         </div>
 
-        {/* Action Button: Salin ke Periode Berjalan */}
+        {/* Tombol Salin */}
         <Button
           size="sm"
           variant={isCopied ? "outline" : "default"}
           onClick={() => onCopy(reference)}
-          disabled={isCopied}
-          className="w-full text-xs h-8 flex items-center justify-center gap-1.5"
+          className="w-full h-8 text-xs flex items-center justify-center gap-1.5 mt-1"
         >
           <Copy className="size-3.5" />
-          <span>
-            {isCopied
-              ? "Tersalin ke Bulan Ini"
-              : `Salin ke ${targetMonthName} ${targetYear}`}
-          </span>
+          <span>{isCopied ? "Telah Disalin" : "Salin ke Rencana Aksi Saya"}</span>
         </Button>
       </CardContent>
     </Card>
   )
 }
-

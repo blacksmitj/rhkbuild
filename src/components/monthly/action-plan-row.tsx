@@ -2,7 +2,7 @@
 
 import type { SkpIndicator } from "@/lib/mock-data"
 import type { ActionPlanWithEvidence } from "@/lib/stores/skp-store"
-import { ActionPlanMenu } from "@/components/bulanan/action-plan-menu"
+import { ActionPlanMenu } from "@/components/monthly/action-plan-menu"
 import { Badge } from "@/components/ui/badge"
 import { Link2, FileText, ExternalLink } from "lucide-react"
 
@@ -56,36 +56,39 @@ export function ActionPlanRow({
                 href={evidence.evidenceValue}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-primary hover:underline flex items-center gap-1 truncate max-w-[220px]"
+                className="text-[11px] text-primary hover:underline flex items-center gap-1 truncate max-w-[200px]"
               >
-                <span className="truncate">{evidence.evidenceValue}</span>
-                <ExternalLink className="size-3 shrink-0" />
+                <span>{evidence.evidenceValue}</span>
+                <ExternalLink className="size-2.5 shrink-0" />
               </a>
             ) : (
-              <span className="text-[11px] text-muted-foreground font-mono truncate max-w-[220px] block">
-                {evidence.evidenceValue}
-              </span>
+              <p className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                File: {evidence.evidenceValue}
+              </p>
             )}
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground italic">Belum ada bukti</span>
+          <span className="text-xs text-muted-foreground italic">Tidak ada bukti</span>
         )}
       </td>
 
-      {/* Kolom 3: Realisasi Bulan Ini */}
+      {/* Kolom 3: Realisasi & Target */}
       <td className="py-3.5 px-4 align-top whitespace-nowrap">
-        <div className="flex items-baseline gap-1">
-          <span className="text-base font-bold text-foreground">
-            {actionPlan.realizationValue}
-          </span>
-          <span className="text-xs text-muted-foreground font-medium">
-            {indicator.unit}
-          </span>
+        <div className="space-y-0.5">
+          <div className="text-sm font-semibold text-foreground">
+            {actionPlan.realizationValue}{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              {indicator.unit}
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Target: {indicator.annualTarget} {indicator.unit}
+          </p>
         </div>
       </td>
 
-      {/* Kolom 4: Menu Aksi */}
-      <td className="py-3.5 px-4 align-top text-right">
+      {/* Kolom 4: Aksi (Menu Edit, Pindah, Hapus) */}
+      <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
         <ActionPlanMenu
           actionPlan={actionPlan}
           onEdit={onEdit}

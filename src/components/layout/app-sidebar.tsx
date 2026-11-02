@@ -57,17 +57,17 @@ const navigationItems = [
     items: [
       {
         title: "Pengisian Bulanan",
-        url: "/bulanan",
+        url: "/monthly",
         icon: CalendarDays,
       },
       {
         title: "Rekapitulasi",
-        url: "/rekap",
+        url: "/recap",
         icon: PieChart,
       },
       {
         title: "Referensi Rekan",
-        url: "/referensi",
+        url: "/reference",
         icon: Users,
       },
     ],

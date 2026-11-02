@@ -2,13 +2,13 @@
 
 import * as React from "react"
 import { AppHeader } from "@/components/layout/app-header"
-import { MonthSelector } from "@/components/bulanan/month-selector"
-import { MonthStatusBadge } from "@/components/bulanan/month-status-badge"
-import { MarkDoneButton } from "@/components/bulanan/mark-done-button"
-import { IkiGroupCard } from "@/components/bulanan/iki-group-card"
-import { AddActionDialog } from "@/components/bulanan/add-action-dialog"
-import { MoveActionDialog } from "@/components/bulanan/move-action-dialog"
-import { ReferenceSheet } from "@/components/referensi/reference-sheet"
+import { MonthSelector } from "@/components/monthly/month-selector"
+import { MonthStatusBadge } from "@/components/monthly/month-status-badge"
+import { MarkDoneButton } from "@/components/monthly/mark-done-button"
+import { IkiGroupCard } from "@/components/monthly/iki-group-card"
+import { AddActionDialog } from "@/components/monthly/add-action-dialog"
+import { MoveActionDialog } from "@/components/monthly/move-action-dialog"
+import { ReferenceSheet } from "@/components/reference/reference-sheet"
 import { CopySourceSheet } from "@/components/copy/copy-source-sheet"
 import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { CalendarCheck, Sparkles } from "lucide-react"
 
-export default function BulananPage() {
+export default function MonthlyPage() {
   const router = useRouter()
   const {
     indicators,
@@ -65,10 +65,11 @@ export default function BulananPage() {
   }
 
   const handleDeleteAction = (id: string) => {
-    deleteActionPlan(id)
+    if (confirm("Apakah Anda yakin ingin menghapus rencana aksi ini?")) {
+      deleteActionPlan(id)
+    }
   }
 
-  // Phase 3 Trigger Handlers
   const handleOpenReference = (indicator: SkpIndicator) => {
     setReferenceTargetIndicator(indicator)
     setReferenceSheetOpen(true)
@@ -82,72 +83,69 @@ export default function BulananPage() {
   return (
     <>
       <AppHeader
-        breadcrumbs={[
-          { title: "Pengisian Bulanan", href: "/bulanan" },
-          { title: `${monthName} ${selectedYear}` },
-        ]}
+        breadcrumbs={[{ title: "Pengisian Bulanan", href: "/monthly" }]}
         onOpenAuditLog={() => setAuditLogOpen(true)}
       />
-      <main className="flex-1 space-y-6 p-6">
-        {/* Header Title & Month Status */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Pengisian Bulanan — {monthName} {selectedYear}
-              </h1>
-              {currentMonthlyPeriod && (
-                <MonthStatusBadge status={currentMonthlyPeriod.status} />
-              )}
+
+      <main className="flex-1 space-y-6 p-6 max-w-7xl mx-auto w-full">
+        {/* Top Bar: Selector Bulan & Status Pengisian */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  Bulan {monthName} {selectedYear}
+                </h2>
+                {currentMonthlyPeriod && (
+                  <MonthStatusBadge status={currentMonthlyPeriod.status} />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Pilih tab bulan untuk melihat dan mengisi realisasi rencana aksi serta bukti dukung bulanan.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Input rencana aksi, bukti dukung, dan realisasi. Anda juga dapat menyalin aktivitas dari bulan lalu atau referensi rekan se-instansi.
-            </p>
+
+            {/* Tombol Tandai Selesai Diisi / Draft (BR-08) */}
+            <div className="flex items-center gap-2">
+              <MarkDoneButton />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setReferenceTargetIndicator(indicators[0] || null)
-                setReferenceSheetOpen(true)
-              }}
-              className="flex items-center gap-1.5 h-9"
-            >
-              <Sparkles className="size-4 text-primary" />
-              <span>Cari Referensi Instansi</span>
-            </Button>
-            <MarkDoneButton />
-          </div>
-        </div>
-
-        {/* Tab Selector Bulan Jan - Des */}
-        <div className="space-y-1.5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Pilih Bulan Pengisian:
-          </div>
+          {/* Month Horizontal Selector */}
           <MonthSelector />
         </div>
 
-        {/* List IKI Cards (Grup Rencana Aksi per IKI) */}
+        {/* Info Banner Periode */}
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-primary/5 border border-primary/15 text-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-primary shrink-0" />
+            <span className="text-foreground">
+              Pengisian dilakukan per <strong>Indikator Kinerja Individu (IKI)</strong>. Setiap rencana aksi memiliki tepat 1 tautan/berkas bukti dukung.
+            </span>
+          </div>
+          <span className="text-muted-foreground font-medium shrink-0">
+            {indicators.length} IKI Aktif
+          </span>
+        </div>
+
+        {/* Content: List of IKI Cards or Empty State */}
         {indicators.length === 0 ? (
           <EmptyState
             icon={CalendarCheck}
-            title="Belum Ada Struktur IKI"
-            description="Silakan buat struktur RHK dan IKI terlebih dahulu di menu SKP Tahunan sebelum mengisi rencana aksi bulanan."
+            title="Belum Ada Indikator Kinerja (IKI)"
+            description="Anda belum memiliki sasaran kinerja tahunan. Buat RHK Pimpinan, RHK Individu, dan IKI terlebih dahulu di menu SKP Tahunan."
             actionLabel="Buka SKP Tahunan"
             onAction={() => router.push("/skp")}
-            actionIcon={CalendarCheck}
           />
         ) : (
           <div className="space-y-4">
-            {currentMonthlyPeriod &&
-              indicators.map((indicator) => (
+            {indicators
+              .sort((a, b) => a.order - b.order)
+              .map((indicator) => (
                 <IkiGroupCard
                   key={indicator.id}
                   indicator={indicator}
-                  monthlyPeriodId={currentMonthlyPeriod.id}
+                  monthlyPeriodId={currentMonthlyPeriod?.id || ""}
                   onAddAction={handleAddAction}
                   onEditAction={handleEditAction}
                   onMoveAction={handleMoveAction}

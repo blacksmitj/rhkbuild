@@ -58,10 +58,10 @@ export function ActionPlanMenu({
 
         <DropdownMenuItem
           onClick={() => onDelete(actionPlan.id)}
-          className="text-destructive focus:text-destructive cursor-pointer"
+          className="cursor-pointer text-destructive focus:text-destructive"
         >
           <Trash2 className="size-3.5 mr-2" />
-          Hapus
+          Hapus Rencana Aksi
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

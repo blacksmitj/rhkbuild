@@ -43,7 +43,7 @@ export default function DashboardPage() {
               Kelola Struktur SKP
             </Link>
             <Link
-              href="/bulanan"
+              href="/monthly"
               className={cn(buttonVariants({ size: "sm" }), "flex items-center gap-1.5")}
             >
               <PlusCircle className="size-4" />

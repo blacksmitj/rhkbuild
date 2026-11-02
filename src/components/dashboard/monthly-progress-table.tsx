@@ -102,7 +102,7 @@ export function MonthlyProgressTable() {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
-                        href="/bulanan"
+                        href="/monthly"
                         onClick={() => setSelectedMonth(period.month)}
                         className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-xs font-medium")}
                       >

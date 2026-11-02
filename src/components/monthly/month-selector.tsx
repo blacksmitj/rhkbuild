@@ -49,6 +49,9 @@ export function MonthSelector() {
                     title="Draft"
                   />
                 )}
+                {!isCompleted && !isDraft && (
+                  <span className="size-1.5 rounded-full bg-border" />
+                )}
               </div>
             </button>
           )
