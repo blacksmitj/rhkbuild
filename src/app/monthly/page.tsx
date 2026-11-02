@@ -8,15 +8,13 @@ import { MarkDoneButton } from "@/components/monthly/mark-done-button"
 import { IkiGroupCard } from "@/components/monthly/iki-group-card"
 import { AddActionDialog } from "@/components/monthly/add-action-dialog"
 import { MoveActionDialog } from "@/components/monthly/move-action-dialog"
-import { CopySourceSheet } from "@/components/copy/copy-source-sheet"
-import { ColleagueReferencePanel } from "@/components/reference/colleague-reference-panel"
+import { EmbeddedReferenceSheet } from "@/components/monthly/embedded-reference-sheet"
 import { ActivityLogPanel } from "@/components/audit/activity-log-panel"
 import { EmptyState } from "@/components/ui/empty-state"
 import { useSkpStore, type ActionPlanWithEvidence } from "@/lib/stores/skp-store"
 import { MONTH_NAMES, type SkpIndicator } from "@/lib/mock-data"
-import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { CalendarCheck, Users, Sparkles, Pin } from "lucide-react"
+import { CalendarCheck, Sparkles } from "lucide-react"
 
 export default function MonthlyPage() {
   const router = useRouter()
@@ -41,12 +39,16 @@ export default function MonthlyPage() {
   const [movingAction, setMovingAction] = React.useState<ActionPlanWithEvidence | null>(null)
 
   // Reference Panel & Copy Source States
-  const [referencePanelOpen, setReferencePanelOpen] = React.useState(false)
-  const [referencePinned, setReferencePinned] = React.useState(false)
   const [referenceTargetIndicator, setReferenceTargetIndicator] = React.useState<SkpIndicator | null>(null)
-
-  const [copySourceSheetOpen, setCopySourceSheetOpen] = React.useState(false)
+  const [activeRightTab, setActiveRightTab] = React.useState<"colleague" | "copy">("colleague")
   const [auditLogOpen, setAuditLogOpen] = React.useState(false)
+
+  // Inisialisasi indicator pertama sebagai target awal jika belum ada
+  React.useEffect(() => {
+    if (indicators.length > 0 && !referenceTargetIndicator) {
+      setReferenceTargetIndicator(indicators[0])
+    }
+  }, [indicators, referenceTargetIndicator])
 
   // Open Handlers
   const handleAddAction = (indicator: SkpIndicator) => {
@@ -76,12 +78,12 @@ export default function MonthlyPage() {
     if (indicator) {
       setReferenceTargetIndicator(indicator)
     }
-    setReferencePanelOpen(true)
+    setActiveRightTab("colleague")
   }
 
   const handleOpenCopySource = (indicator: SkpIndicator) => {
     setReferenceTargetIndicator(indicator)
-    setCopySourceSheetOpen(true)
+    setActiveRightTab("copy")
   }
 
   return (
@@ -111,25 +113,6 @@ export default function MonthlyPage() {
 
             {/* Quick Action Top Bar */}
             <div className="flex items-center gap-2">
-              <Button
-                variant={referencePanelOpen ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => {
-                  if (!referencePanelOpen) {
-                    setReferencePanelOpen(true)
-                  } else {
-                    setReferencePanelOpen(false)
-                  }
-                }}
-                className="h-8 text-xs flex items-center gap-1.5"
-              >
-                <Users className="size-3.5 text-primary" />
-                <span>Referensi Rekan</span>
-                {referencePinned && (
-                  <Pin className="size-2.5 text-primary ml-0.5 fill-primary" />
-                )}
-              </Button>
-
               <MarkDoneButton />
             </div>
           </div>
@@ -151,14 +134,10 @@ export default function MonthlyPage() {
           </span>
         </div>
 
-        {/* Content Area: Split View jika Referensi di-pin */}
-        <div
-          className={`flex gap-5 items-start ${
-            referencePinned && referencePanelOpen ? "flex-col lg:flex-row" : ""
-          }`}
-        >
-          {/* Main List of IKI Cards */}
-          <div className="flex-1 space-y-4 min-w-0 w-full">
+        {/* Content Area: Fixed 2-Kolom Sematan */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Kolom Kiri: Main List of IKI Cards (lg:col-span-7 atau 8) */}
+          <div className="lg:col-span-7 xl:col-span-7 space-y-4 min-w-0 w-full">
             {indicators.length === 0 ? (
               <EmptyState
                 icon={CalendarCheck}
@@ -186,28 +165,16 @@ export default function MonthlyPage() {
             )}
           </div>
 
-          {/* Pinned Colleague Reference Panel */}
-          {referencePinned && referencePanelOpen && (
-            <ColleagueReferencePanel
-              isOpen={referencePanelOpen}
-              onClose={() => setReferencePanelOpen(false)}
-              isPinned={true}
-              onTogglePin={() => setReferencePinned(false)}
+          {/* Kolom Kanan: Sematan Sheet Referensi & Salin Periode (lg:col-span-5) */}
+          <div className="lg:col-span-5 xl:col-span-5 w-full">
+            <EmbeddedReferenceSheet
               targetIndicator={referenceTargetIndicator}
+              onSelectTargetIndicator={(ind) => setReferenceTargetIndicator(ind)}
+              activeTab={activeRightTab}
+              onTabChange={(tab) => setActiveRightTab(tab)}
             />
-          )}
+          </div>
         </div>
-
-        {/* Floating Colleague Reference Panel (saat tidak di-pin) */}
-        {!referencePinned && (
-          <ColleagueReferencePanel
-            isOpen={referencePanelOpen}
-            onClose={() => setReferencePanelOpen(false)}
-            isPinned={false}
-            onTogglePin={() => setReferencePinned(true)}
-            targetIndicator={referenceTargetIndicator}
-          />
-        )}
 
         {/* Form Dialog Tambah / Edit Rencana Aksi (Fallback jika butuh form detail) */}
         {activeIndicator && (
@@ -225,16 +192,6 @@ export default function MonthlyPage() {
           onOpenChange={setMoveDialogOpen}
           actionPlan={movingAction}
         />
-
-        {/* Sheet: Salin Rencana Aksi dari Bulan Lalu / Lain */}
-        {referenceTargetIndicator && (
-          <CopySourceSheet
-            open={copySourceSheetOpen}
-            onOpenChange={setCopySourceSheetOpen}
-            targetIndicator={referenceTargetIndicator}
-            onOpenColleagueReference={() => setReferencePanelOpen(true)}
-          />
-        )}
 
         {/* Audit Log Panel */}
         <ActivityLogPanel open={auditLogOpen} onOpenChange={setAuditLogOpen} />
